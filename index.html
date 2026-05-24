@@ -4,53 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人展示空间</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/common.css">
 </head>
 <body>
     <nav class="navbar" id="navbar">
-        <div class="nav-brand">
-            <a href="./index.html">LuoDaoBin</a>
-        </div>
-        <button class="nav-toggle" id="navToggle" aria-label="切换导航">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-        <div class="nav-links" id="navLinks">
-            <!-- 主题导航将由 JS 动态渲染 -->
+        <div class="nav-inner">
+            <a href="./index.html" class="nav-brand">LuoDaoBin</a>
+            <button class="nav-toggle" id="navToggle" aria-label="切换导航">
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-links" id="navLinks"></div>
         </div>
     </nav>
 
     <header class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">构建你的数字空间</h1>
-            <p class="hero-subtitle">每一个主题，都是一段独特的表达</p>
-            <div class="hero-actions">
-                <a href="#themes" class="btn btn-primary">浏览主题</a>
+        <div class="hero-visual" aria-hidden="true">
+            <div class="hero-circle hero-circle-1"></div>
+            <div class="hero-circle hero-circle-2"></div>
+            <div class="hero-circle hero-circle-3"></div>
+        </div>
+        <div class="container hero-layout">
+            <div class="hero-top">
+                <span class="hero-eyebrow">个人展示空间</span>
+                <span class="hero-year">2026</span>
+            </div>
+            <h1 class="hero-title">
+                <span class="line">构建你的</span>
+                <span class="line">数字表达</span>
+            </h1>
+            <div class="hero-lead">
+                <p>每一个主题，都是一段独特的视觉叙事。探索不同风格的数字创作，发现属于你的表达方式。</p>
+                <a href="#themes" class="hero-cta">
+                    浏览全部主题
+                    <span class="cta-arrow">→</span>
+                </a>
             </div>
         </div>
-        <div class="hero-visual">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
+        <div class="hero-bottom container">
+            <span class="hero-index">01</span>
+            <span class="hero-section-name">主题索引</span>
         </div>
     </header>
 
     <main>
         <section class="themes-section" id="themes">
-            <div class="container">
-                <h2 class="section-title">我的主题</h2>
-                <p class="section-desc">按创建时间排序</p>
-                <div class="themes-grid" id="themesGrid">
-                    <!-- 主题卡片由 JS 动态渲染 -->
-                </div>
+            <div class="container section-layout">
+                <header class="section-header">
+                    <span class="section-eyebrow">Contents</span>
+                    <h2 class="section-title">主题索引</h2>
+                </header>
+                <div class="themes-grid" id="themesGrid"></div>
             </div>
         </section>
     </main>
 
     <footer class="footer">
         <div class="container">
-            <p>静态个人展示网站</p>
+            <p>© 2026 LuoDaoBin</p>
         </div>
     </footer>
 

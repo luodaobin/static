@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(mkdir -p \"C:/Users/luodb/.claude/plugins/cache/claude-plugins-official/skill-creator/b392f5189934/skills/courseware-creator-workspace/iteration-1/eval-mitosis/with_skill/outputs\")",
+      "Bash(mkdir -p \"C:/Users/luodb/.claude/plugins/cache/claude-plugins-official/skill-creator/b392f5189934/skills/courseware-creator-workspace/iteration-1/eval-mitosis/without_skill/outputs\")",
+      "Bash(mkdir -p \"C:/Users/luodb/.claude/plugins/cache/claude-plugins-official/skill-creator/b392f5189934/skills/courseware-creator-workspace/iteration-1/eval-photosynthesis/with_skill/outputs\")",
+      "Bash(mkdir -p \"C:/Users/luodb/.claude/plugins/cache/claude-plugins-official/skill-creator/b392f5189934/skills/courseware-creator-workspace/iteration-1/eval-photosynthesis/without_skill/outputs\")",
+      "Bash(mkdir -p \"C:/Users/luodb/.claude/plugins/cache/claude-plugins-official/skill-creator/b392f5189934/skills/courseware-creator-workspace/iteration-1/eval-missing-audience/with_skill/outputs\")"
+    ]
+  }
+}

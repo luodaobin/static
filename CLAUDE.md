@@ -31,7 +31,7 @@ static/
 │   └── README.md           # 主题说明（可选）
 ├── .gitignore
 ├── netlify.toml            # Netlify 部署配置（禁止随意修改）
-├── AGENT.md                # 本文件
+├── CLAUDE.md               # 本文件（自动加载，定义项目规范）
 └── README.md               # 项目总说明
 ```
 

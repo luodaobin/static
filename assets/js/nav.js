@@ -5,6 +5,7 @@
 const themes = [
     // 格式: { name: "主题目录名", label: "展示名称", desc: "简短描述" }
     // 示例: { name: "portfolio", label: "作品集", desc: "展示个人项目与经历" }
+    { name: "learn-rmb", label: "认识人民币", desc: "小学一年级数学课件，认识中国钱币" },
 ];
 
 /**

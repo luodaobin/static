@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 编程经验分享</title>
+  <style>
+    :root{
+      --ink:#0a1f3d;
+      --ink-rgb:10,31,61;
+      --paper:#f1f3f5;
+      --paper-rgb:241,243,245;
+      --paper-tint:#e4e8ec;
+      --ink-tint:#152a4a;
+      --accent:#b88a42;
+      --muted:#778394;
+      --mono:"Cascadia Mono","SFMono-Regular","IBM Plex Mono",Consolas,monospace;
+      --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif;
+      --sans:"Noto Sans SC","Microsoft YaHei UI","PingFang SC",Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--ink);font-family:var(--sans);color:var(--paper);letter-spacing:0}
+    body{position:relative}
+    #texture{position:fixed;inset:0;z-index:0;opacity:.5}
+    #deck{position:fixed;inset:0;z-index:1;display:flex;transition:transform .7s cubic-bezier(.77,0,.175,1);will-change:transform}
+    #deck.no-anim{transition:none}
+    .slide{position:relative;flex:0 0 100vw;width:100vw;height:100vh;padding:5.6vh 6vw 9.4vh;overflow:hidden;display:flex;flex-direction:column}
+    .slide.light{background:rgba(var(--paper-rgb),.96);color:var(--ink)}
+    .slide.dark{background:rgba(var(--ink-rgb),.94);color:var(--paper)}
+    .slide.hero.dark{background:linear-gradient(120deg,rgba(var(--ink-rgb),.92),rgba(10,31,61,.82))}
+    .slide.hero.light{background:linear-gradient(120deg,rgba(var(--paper-rgb),.95),rgba(228,232,236,.86))}
+    .slide::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle at 20% 15%,rgba(184,138,66,.12),transparent 25%),linear-gradient(90deg,rgba(127,127,127,.08) 1px,transparent 1px),linear-gradient(0deg,rgba(127,127,127,.06) 1px,transparent 1px);background-size:auto,8vw 8vw,8vw 8vw;opacity:.45}
+    .slide > *{position:relative;z-index:1}
+    .chrome,.foot{display:flex;justify-content:space-between;gap:2vw;font-family:var(--mono);font-size:clamp(10px,.86vw,13px);text-transform:uppercase;letter-spacing:.16em;opacity:.64}
+    .foot{margin-top:auto;align-items:flex-end}
+    .foot .title{font-family:var(--serif);text-transform:none;letter-spacing:.04em;font-size:clamp(12px,.95vw,15px);opacity:.82}
+    .frame{flex:1;min-height:0;display:flex;flex-direction:column}
+    .center{justify-content:center;align-items:center;text-align:center}
+    .grid-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5vw;align-items:center}
+    .grid-45-55{display:grid;grid-template-columns:45fr 55fr;gap:5vw;align-items:center}
+    .grid-55-45{display:grid;grid-template-columns:55fr 45fr;gap:5vw;align-items:center}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2vw}
+    .grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.6vw}
+    .grid-6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2.2vh 1.8vw}
+    .kicker{font-family:var(--mono);font-size:clamp(11px,.9vw,14px);letter-spacing:.28em;text-transform:uppercase;opacity:.66;margin-bottom:2.2vh}
+    h1,h2,h3,p{margin:0}
+    .h-hero{font-family:var(--serif);font-weight:900;font-size:clamp(52px,8.7vw,150px);line-height:.96;letter-spacing:-.01em}
+    .h-xl{font-family:var(--serif);font-weight:800;font-size:clamp(38px,5.4vw,92px);line-height:1.05;letter-spacing:-.005em}
+    .h-md{font-family:var(--serif);font-weight:700;font-size:clamp(24px,2.45vw,42px);line-height:1.22}
+    .lead{font-family:var(--serif);font-size:clamp(20px,1.85vw,32px);line-height:1.45;opacity:.86}
+    .body{font-size:clamp(16px,1.18vw,22px);line-height:1.72;opacity:.82}
+    .meta-row{display:flex;gap:1.2em;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:clamp(11px,.9vw,14px);letter-spacing:.14em;text-transform:uppercase;opacity:.68}
+    .rule{height:1px;background:currentColor;opacity:.22;margin:3vh 0}
+    .keyword-card,.soft-card{border-top:1px solid rgba(127,127,127,.35);padding:2.3vh 0 0;min-height:17vh}
+    .keyword-card .tag-n{font-family:var(--serif);font-size:clamp(42px,5.2vw,88px);line-height:.9;color:var(--accent)}
+    .keyword-card h3,.soft-card h3{font-family:var(--serif);font-size:clamp(22px,2vw,34px);line-height:1.2;margin:.8vh 0 1.2vh}
+    .keyword-card p,.soft-card p{font-size:clamp(15px,1.05vw,19px);line-height:1.55;opacity:.78}
+    .quote{font-family:var(--serif);font-size:clamp(28px,3.2vw,54px);line-height:1.28}
+    .callout{border-left:3px solid currentColor;background:rgba(127,127,127,.08);padding:2.4vh 2vw;font-family:var(--serif);font-size:clamp(18px,1.45vw,25px);line-height:1.55}
+    .list{display:flex;flex-direction:column;gap:1.35vh;margin-top:2vh}
+    .list div{display:grid;grid-template-columns:2.2em 1fr;gap:.7vw;font-size:clamp(16px,1.18vw,22px);line-height:1.48}
+    .list b{font-family:var(--mono);font-weight:600;color:var(--accent)}
+    .code{font-family:var(--mono);font-size:clamp(13px,1vw,18px);line-height:1.55;background:#071529;color:#d7e0ea;border:1px solid rgba(255,255,255,.12);padding:2.2vh 1.8vw;border-radius:8px;white-space:pre-wrap;overflow:auto;max-height:46vh;overflow-wrap:anywhere}
+    .code .kw{color:#e6b66d}.code .str{color:#9bd19f}.code .cm{color:#8090a7}.code .fn{color:#8fc7ff}
+    .visual{border:1px solid rgba(127,127,127,.28);background:rgba(255,255,255,.055);border-radius:8px;min-height:42vh;padding:2.2vh 2vw;position:relative;overflow:hidden}
+    .light .visual{background:rgba(10,31,61,.045)}
+    .visual svg{width:100%;height:100%;min-height:38vh;display:block}
+    .node{fill:rgba(241,243,245,.06);stroke:currentColor;stroke-opacity:.52;stroke-width:1.2}
+    .light .node{fill:rgba(10,31,61,.035)}
+    .accent-fill{fill:var(--accent)}.accent-stroke{stroke:var(--accent)}
+    .svg-text{font-family:var(--sans);font-size:18px;fill:currentColor}
+    .svg-mono{font-family:var(--mono);font-size:14px;fill:currentColor;opacity:.76}
+    .flow{display:flex;align-items:center;gap:1vw;justify-content:center;min-height:34vh;flex-wrap:wrap}
+    .flow-box{border:1px solid rgba(127,127,127,.38);padding:2vh 1.4vw;min-width:13vw;text-align:center;background:rgba(127,127,127,.06);border-radius:8px}
+    .flow-box strong{display:block;font-family:var(--serif);font-size:clamp(20px,1.7vw,30px);margin-bottom:.8vh}
+    .arrow{font-family:var(--serif);font-size:clamp(28px,3vw,50px);opacity:.55}
+    .split-compare{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+    .compare-col{border-top:2px solid currentColor;padding-top:2vh}
+    .compare-col h3{font-family:var(--serif);font-size:clamp(26px,2.6vw,46px);margin-bottom:2vh}
+    .badge{display:inline-flex;align-items:center;gap:.6em;border:1px solid currentColor;border-radius:999px;padding:.55em .9em;font-family:var(--mono);font-size:clamp(11px,.9vw,14px);letter-spacing:.08em;opacity:.75}
+    .risk-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;min-height:44vh;border:1px solid rgba(127,127,127,.35)}
+    .risk-cell{position:relative;padding:2vh 1.6vw;border-right:1px solid rgba(127,127,127,.25);border-bottom:1px solid rgba(127,127,127,.25)}
+    .risk-cell:nth-child(2n){border-right:0}.risk-cell:nth-child(n+3){border-bottom:0}
+    .risk-cell h3{font-family:var(--serif);font-size:clamp(20px,1.7vw,30px)}
+    .risk-cell p{margin-top:1vh;font-size:clamp(15px,1vw,18px);line-height:1.5;opacity:.76}
+    .axis-x,.axis-y{position:absolute;font-family:var(--mono);font-size:12px;letter-spacing:.1em;opacity:.58}
+    .axis-x{bottom:-3.2vh;left:0;right:0;text-align:center}.axis-y{left:-4.2vw;top:45%;transform:rotate(-90deg)}
+    .checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.8vh 2vw;margin-top:4vh}
+    .check{display:grid;grid-template-columns:2.5em 1fr;gap:1vw;align-items:start;border-top:1px solid rgba(127,127,127,.32);padding-top:1.5vh}
+    .check span{font-family:var(--serif);font-size:clamp(28px,2.6vw,44px);line-height:1;color:var(--accent)}
+    .check p{font-size:clamp(17px,1.22vw,22px);line-height:1.45}
+    .progress-wrap{position:fixed;left:0;right:0;bottom:0;height:4px;z-index:5;background:rgba(127,127,127,.25)}
+    #progress{height:100%;width:0;background:var(--accent);transition:width .5s ease}
+    .pager{position:fixed;right:3vw;bottom:2.7vh;z-index:6;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--paper);mix-blend-mode:difference}
+    .nav-btn{position:fixed;bottom:2.1vh;z-index:6;border:1px solid rgba(255,255,255,.32);background:rgba(0,0,0,.18);color:#fff;border-radius:999px;width:40px;height:40px;font-size:22px;cursor:pointer;backdrop-filter:blur(8px)}
+    #prev{left:3vw}#next{left:calc(3vw + 50px)}
+    .nav-btn:disabled{opacity:.25;cursor:not-allowed}
+    @media (max-width:900px){
+      .slide{padding:4vh 5vw 9vh}
+      .grid-2,.grid-45-55,.grid-55-45{grid-template-columns:1fr;gap:2.4vh}
+      .grid-3,.grid-4,.grid-6,.checklist{grid-template-columns:1fr 1fr}
+      .visual{min-height:30vh}.visual svg{min-height:28vh}
+      .code{max-height:34vh}
+      .chrome{font-size:10px}
+      .foot{display:none}
+    }
+    @media (max-width:560px){
+      .grid-3,.grid-4,.grid-6,.checklist{grid-template-columns:1fr}
+      .keyword-card{min-height:auto}
+      .h-hero{font-size:clamp(44px,16vw,80px)}
+      .h-xl{font-size:clamp(34px,11vw,62px)}
+      .lead{font-size:18px}
+      .body{font-size:15px}
+      .visual{display:none}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="texture"></canvas>
+  <main id="deck">
+    <section class="slide hero dark">
+      <div class="chrome"><div>Internal Engineering · AI Coding</div><div>Vol.01</div></div>
+      <div class="frame grid-55-45">
+        <div>
+          <div class="kicker">Experience Sharing</div>
+          <h1 class="h-hero">AI 编程<br>经验分享</h1>
+          <div class="rule"></div>
+          <p class="lead" style="max-width:58vw">从大模型机制到 Agent 工作流：把重复劳动交出去，把工程判断留下来。</p>
+          <div class="meta-row" style="margin-top:4vh"><span>LLM</span><span>Context</span><span>Agent</span><span>Review</span></div>
+        </div>
+        <div class="visual" aria-label="开发者与 AI 协作编程抽象图">
+          <svg viewBox="0 0 760 520" role="img">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="currentColor"/></marker>
+            </defs>
+            <rect class="node" x="42" y="60" width="265" height="335" rx="12"/>
+            <rect class="node" x="455" y="60" width="265" height="335" rx="12"/>
+            <circle cx="174" cy="170" r="45" fill="none" stroke="currentColor" opacity=".55"/>
+            <path d="M104 318 C140 270 210 270 246 318" fill="none" stroke="currentColor" opacity=".55" stroke-width="2"/>
+            <text class="svg-text" x="106" y="92">Human Review</text>
+            <text class="svg-mono" x="88" y="360">architecture / risk / taste</text>
+            <text class="svg-text" x="495" y="92">AI Agent</text>
+            <rect x="500" y="132" width="170" height="28" fill="currentColor" opacity=".12"/>
+            <rect x="500" y="178" width="135" height="18" fill="currentColor" opacity=".2"/>
+            <rect x="500" y="212" width="185" height="18" fill="currentColor" opacity=".2"/>
+            <rect x="500" y="246" width="118" height="18" fill="currentColor" opacity=".2"/>
+            <path d="M318 158 C370 118 410 118 445 158" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M445 285 C390 330 356 330 318 285" fill="none" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrow)"/>
+            <text class="svg-mono" x="335" y="145">context</text>
+            <text class="svg-mono" x="337" y="324" fill="var(--accent)">diff + tests</text>
+          </svg>
+        </div>
+      </div>
+      <div class="foot"><div class="title">从大模型机制到 Agent 工作流</div><div>2026</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>Core Model · Mental Model</div><div>02 / 18</div></div>
+      <div class="frame" style="justify-content:center">
+        <div class="kicker">先把神秘感拿掉</div>
+        <h2 class="h-xl">我对 AI 编程的核心理解</h2>
+        <div class="grid-4" style="margin-top:7vh">
+          <div class="keyword-card"><div class="tag-n">01</div><h3>概率</h3><p>AI 不是魔法，而是一个极强的“概率猜字机器”。</p></div>
+          <div class="keyword-card"><div class="tag-n">02</div><h3>上下文</h3><p>它无状态，但能在你给出的上下文里做很强的推理。</p></div>
+          <div class="keyword-card"><div class="tag-n">03</div><h3>工具</h3><p>Agent 的本质，是把模型接入工具和真实环境形成循环。</p></div>
+          <div class="keyword-card"><div class="tag-n">04</div><h3>Review</h3><p>高效使用方式，是管理边界、明确任务，并持续 review。</p></div>
+        </div>
+      </div>
+      <div class="foot"><div class="title">四个关键词</div><div>Probability · Context · Tools · Review</div></div>
+    </section>
+
+    <section class="slide dark">
+      <div class="chrome"><div>LLM · Next Token</div><div>03 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">它到底在做什么</div>
+          <h2 class="h-xl">大模型的本质：概率猜字机器</h2>
+          <div class="list">
+            <div><b>01</b><span>大模型根据前文，一个 token 一个 token 地预测后续内容。</span></div>
+            <div><b>02</b><span>它本质上是在“续写”，只是规模足够大，表现出了知识、推理和代码能力。</span></div>
+            <div><b>03</b><span>所以它很强，也会犯“看起来很合理但其实错误”的问题。</span></div>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="flow">
+            <div class="flow-box"><strong>前文输入</strong><span class="body">需求、代码、历史对话</span></div>
+            <div class="arrow">→</div>
+            <div class="flow-box"><strong>概率分布</strong><span class="body">下一个 token 的可能性</span></div>
+            <div class="arrow">→</div>
+            <div class="flow-box"><strong>选择 token</strong><span class="body">继续生成</span></div>
+          </div>
+          <div class="callout">关键点：它不是从数据库里“查答案”，而是在上下文约束下生成最可能的续写。</div>
+        </div>
+      </div>
+      <div class="foot"><div class="title">强能力与幻觉来自同一个机制</div><div>Token by Token</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>Context · Stateless</div><div>04 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">它不会天然记住你</div>
+          <h2 class="h-xl">大模型是无状态的</h2>
+          <div class="list">
+            <div><b>01</b><span>模型服务器不会天然记住你是谁、刚才说过什么。</span></div>
+            <div><b>02</b><span>每次交互，都要把历史消息重新发给模型。</span></div>
+            <div><b>03</b><span>模型输出后，又会追加到下一次输入中。</span></div>
+            <div><b>04</b><span>所谓“记忆”，通常是客户端不断维护 messages。</span></div>
+          </div>
+        </div>
+        <div class="visual" aria-label="client messages 数组发送到 model server">
+          <svg viewBox="0 0 780 520">
+            <defs><marker id="arrow2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="currentColor"/></marker></defs>
+            <rect class="node" x="44" y="55" width="285" height="380" rx="10"/>
+            <text class="svg-text" x="82" y="96">Client</text>
+            <text class="svg-mono" x="82" y="128">messages[]</text>
+            <rect x="82" y="160" width="205" height="38" fill="currentColor" opacity=".12"/>
+            <rect x="82" y="214" width="228" height="38" fill="currentColor" opacity=".18"/>
+            <rect x="82" y="268" width="190" height="38" fill="currentColor" opacity=".22"/>
+            <rect x="82" y="322" width="236" height="38" fill="var(--accent)" opacity=".32"/>
+            <text class="svg-mono" x="102" y="184">system</text>
+            <text class="svg-mono" x="102" y="238">user</text>
+            <text class="svg-mono" x="102" y="292">assistant</text>
+            <text class="svg-mono" x="102" y="346">new_msg</text>
+            <rect class="node" x="510" y="158" width="210" height="155" rx="12"/>
+            <text class="svg-text" x="548" y="222">Model Server</text>
+            <text class="svg-mono" x="562" y="258">stateless</text>
+            <path d="M345 180 C418 150 458 150 500 188" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#arrow2)"/>
+            <path d="M500 296 C430 354 396 368 334 344" fill="none" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrow2)"/>
+            <text class="svg-mono" x="378" y="146">send all context</text>
+            <text class="svg-mono" x="384" y="382" fill="var(--accent)">append output</text>
+          </svg>
+        </div>
+      </div>
+      <div class="foot"><div class="title">记忆在客户端，不在模型里</div><div>Messages as State</div></div>
+    </section>
+
+    <section class="slide dark">
+      <div class="chrome"><div>Context Window · Token Cost</div><div>05 / 18</div></div>
+      <div class="frame grid-55-45">
+        <div>
+          <div class="kicker">上下文不是免费的</div>
+          <h2 class="h-xl">Context 与 Context Window</h2>
+          <div class="list">
+            <div><b>01</b><span>一直累积发送给模型的 messages，就是上下文 context。</span></div>
+            <div><b>02</b><span>context window 是模型一次能读取的最大上下文长度。</span></div>
+            <div><b>03</b><span>对话越长，token 消耗越快；满了以后只能压缩。</span></div>
+            <div><b>04</b><span>多次压缩后，容易信息丢失、注意力丢失、幻觉变多。</span></div>
+          </div>
+        </div>
+        <pre class="code"><span class="kw">messages</span> = [
+  {<span class="str">"role"</span>: <span class="str">"system"</span>, <span class="str">"content"</span>: self.<span class="fn">render_system_prompt</span>(react_system_prompt_template)},
+  {<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: f<span class="str">"&lt;question&gt;{user_input}&lt;/question&gt;"</span>}
+]
+
+<span class="kw">while</span> True:
+  content = self.<span class="fn">call_model</span>(messages)
+  <span class="cm"># ...处理 content</span>
+  <span class="cm"># 等待用户输入或调用工具产生新的输入</span>
+  <span class="cm"># ...产生新的请求数据 new_msg</span>
+  messages.<span class="fn">append</span>({<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: new_msg})</pre>
+      </div>
+      <div class="foot"><div class="title">上下文满了以后，只能做压缩和取舍</div><div>Context Window</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>Model Switch · Portability</div><div>06 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">为什么对话可以搬家</div>
+          <h2 class="h-xl">为什么可以在模型厂商之间切换</h2>
+          <div class="list">
+            <div><b>01</b><span>因为大模型无状态。</span></div>
+            <div><b>02</b><span>只要客户端保存完整上下文，就可以把同一份 messages 发给另一个模型。</span></div>
+            <div><b>03</b><span>所以 Claude Code 对话到一半额度不够时，可以通过 CCSwitch 从 Anthropic 切到 DeepSeek。</span></div>
+            <div><b>04</b><span>模型不同，能力、风格、工具适配会有差异，但机制上可迁移。</span></div>
+          </div>
+        </div>
+        <div class="visual">
+          <svg viewBox="0 0 780 520">
+            <defs><marker id="arrow3" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="currentColor"/></marker></defs>
+            <rect class="node" x="60" y="190" width="210" height="130" rx="10"/>
+            <text class="svg-text" x="103" y="245">Context</text>
+            <text class="svg-mono" x="90" y="278">same messages</text>
+            <rect class="node" x="505" y="60" width="200" height="90" rx="10"/>
+            <rect class="node" x="505" y="215" width="200" height="90" rx="10"/>
+            <rect class="node" x="505" y="370" width="200" height="90" rx="10"/>
+            <text class="svg-text" x="560" y="115">Claude</text>
+            <text class="svg-text" x="546" y="270">DeepSeek</text>
+            <text class="svg-text" x="558" y="425">OpenAI</text>
+            <path d="M280 232 C385 135 430 105 495 105" fill="none" stroke="currentColor" marker-end="url(#arrow3)" stroke-width="2"/>
+            <path d="M280 255 H495" fill="none" stroke="var(--accent)" marker-end="url(#arrow3)" stroke-width="3"/>
+            <path d="M280 288 C390 385 430 415 495 415" fill="none" stroke="currentColor" marker-end="url(#arrow3)" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+      <div class="foot"><div class="title">迁移的是上下文，不是模型记忆</div><div>Vendor Switch</div></div>
+    </section>
+
+    <section class="slide hero dark">
+      <div class="chrome"><div>Agent · Work Loop</div><div>07 / 18</div></div>
+      <div class="frame center">
+        <div class="kicker">从聊天到干活</div>
+        <h2 class="h-hero" style="font-size:clamp(52px,7.6vw,132px)">什么是 Agent</h2>
+        <p class="lead" style="max-width:72vw;margin-top:4vh">Agent 是在模型外面包了一层工作循环：它可以思考、调用工具、观察结果，再继续下一步。</p>
+        <div class="meta-row" style="margin-top:6vh"><span>Thought</span><span>Action</span><span>Observation</span><span>Final Answer</span></div>
+      </div>
+      <div class="foot"><div class="title">编程 Agent 的核心，是能和真实环境交互</div><div>Tool-Using Loop</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>ReAct · Reasoning + Acting</div><div>08 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">Reasoning + Acting</div>
+          <h2 class="h-xl">ReAct 范式</h2>
+          <div class="list">
+            <div><b>01</b><span>ReAct = Reasoning + Acting。</span></div>
+            <div><b>02</b><span>核心循环：Thought → Action → Observation。</span></div>
+            <div><b>03</b><span>它把推理过程和外部工具调用统一起来。</span></div>
+            <div><b>04</b><span>Code Interpreter、Devin、Claude Code、Codex、Cline 等编程 Agent 都能看到类似思想。</span></div>
+          </div>
+        </div>
+        <div class="visual">
+          <svg viewBox="0 0 760 520">
+            <defs><marker id="arrow4" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="currentColor"/></marker></defs>
+            <circle cx="380" cy="260" r="155" fill="none" stroke="currentColor" stroke-opacity=".24" stroke-width="34"/>
+            <path d="M380 102 A158 158 0 0 1 530 212" fill="none" stroke="var(--accent)" stroke-width="8" marker-end="url(#arrow4)"/>
+            <path d="M526 310 A158 158 0 0 1 378 418" fill="none" stroke="var(--accent)" stroke-width="8" marker-end="url(#arrow4)"/>
+            <path d="M238 328 A158 158 0 0 1 235 190" fill="none" stroke="var(--accent)" stroke-width="8" marker-end="url(#arrow4)"/>
+            <rect class="node" x="290" y="70" width="180" height="70" rx="10"/><text class="svg-text" x="333" y="115">Thought</text>
+            <rect class="node" x="505" y="225" width="185" height="70" rx="10"/><text class="svg-text" x="552" y="270">Action</text>
+            <rect class="node" x="250" y="380" width="260" height="70" rx="10"/><text class="svg-text" x="304" y="425">Observation</text>
+            <rect class="node" x="70" y="225" width="175" height="70" rx="10"/><text class="svg-text" x="113" y="270">Tools</text>
+          </svg>
+        </div>
+      </div>
+      <div class="foot"><div class="title">推理和行动放进同一个循环里</div><div>Thought · Action · Observation</div></div>
+    </section>
+
+    <section class="slide dark">
+      <div class="chrome"><div>Agent Prompt · Protocol</div><div>09 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">不是天然会，而是被约束</div>
+          <h2 class="h-xl">Agent 的提示词约束</h2>
+          <div class="list">
+            <div><b>01</b><span>Agent 并不是模型天然就会按流程工作。</span></div>
+            <div><b>02</b><span>实际是通过很长的 system prompt 约束模型行为。</span></div>
+            <div><b>03</b><span>要求输出特定结构，例如 thought、action、observation、final_answer。</span></div>
+            <div><b>04</b><span>输出 action 后停止，等待真实工具返回 observation。</span></div>
+          </div>
+        </div>
+        <pre class="code">&lt;<span class="kw">system</span>&gt;
+你是一个编程 Agent。
+必须按下面协议输出：
+
+&lt;<span class="kw">thought</span>&gt;
+  简要说明下一步判断
+&lt;/<span class="kw">thought</span>&gt;
+
+&lt;<span class="kw">action</span> name=<span class="str">"read_file"</span>&gt;
+  {"path": "src/app.ts"}
+&lt;/<span class="kw">action</span>&gt;
+
+输出 action 后立刻停止，
+等待工具返回 &lt;<span class="kw">observation</span>&gt;。
+
+最终只在确认完成后输出：
+&lt;<span class="kw">final_answer</span>&gt;...&lt;/<span class="kw">final_answer</span>&gt;
+&lt;/<span class="kw">system</span>&gt;</pre>
+      </div>
+      <div class="foot"><div class="title">格式约束 + 工具调用等待</div><div>System Prompt</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>Token Economy · Prefix Cost</div><div>10 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">新对话的第一口很大</div>
+          <h2 class="h-xl">Agent 的初始 Prompt 很贵</h2>
+          <div class="list">
+            <div><b>01</b><span>主流 Agent 每次新对话都会带一段很长的前置约束文本。</span></div>
+            <div><b>02</b><span>例如 Cline 的前置 prompt 约 45KB，转换后大约 12K 到 13K token。</span></div>
+            <div><b>03</b><span>所以新开对话第一次交互就可能消耗 10K 左右 token。</span></div>
+            <div><b>04</b><span>但这部分通常会命中缓存，实际费用和延迟会被优化。</span></div>
+          </div>
+        </div>
+        <div class="visual">
+          <svg viewBox="0 0 760 520">
+            <rect class="node" x="70" y="100" width="620" height="80" rx="10"/>
+            <rect class="node" x="70" y="220" width="620" height="80" rx="10"/>
+            <rect class="node" x="70" y="340" width="620" height="80" rx="10"/>
+            <rect x="70" y="100" width="430" height="80" fill="var(--accent)" opacity=".32"/>
+            <text class="svg-text" x="110" y="150">Prompt 前缀：规则、协议、角色、工具说明</text>
+            <text class="svg-text" x="110" y="270">用户问题：这次真正想做的事</text>
+            <text class="svg-text" x="110" y="390">工具清单：能读文件、跑命令、编辑代码</text>
+            <text class="svg-mono" x="535" y="150">~12K token</text>
+            <text class="svg-mono" x="535" y="270">small</text>
+            <text class="svg-mono" x="535" y="390">varies</text>
+          </svg>
+        </div>
+      </div>
+      <div class="foot"><div class="title">缓存能优化成本，但上下文仍然在请求里</div><div>Prompt Prefix</div></div>
+    </section>
+
+    <section class="slide hero light">
+      <div class="chrome"><div>Session Boundary · Hygiene</div><div>11 / 18</div></div>
+      <div class="frame grid-2">
+        <div>
+          <div class="kicker">会话也需要边界</div>
+          <h2 class="h-hero" style="font-size:clamp(46px,6.6vw,118px)">不要在一个会话里做所有事情</h2>
+        </div>
+        <div>
+          <div class="split-compare">
+            <div class="compare-col">
+              <h3>错误路径</h3>
+              <p class="body">长对话无限拖长，任务互相污染，上下文频繁压缩，最后模型开始忘掉关键约束。</p>
+            </div>
+            <div class="compare-col">
+              <h3>推荐路径</h3>
+              <p class="body">阶段性总结 → 写入文件 → 新开会话 → 读取总结继续。让上下文保持干净。</p>
+            </div>
+          </div>
+          <div class="callout" style="margin-top:4vh">长任务不是不能做，而是要像工程交接一样做。</div>
+        </div>
+      </div>
+      <div class="foot"><div class="title">上下文污染会慢慢吃掉质量</div><div>Summarize · Restart · Continue</div></div>
+    </section>
+
+    <section class="slide dark">
+      <div class="chrome"><div>System Spec · Read First</div><div>12 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">先让它认识这片代码</div>
+          <h2 class="h-xl">让 AI 先理解现有系统</h2>
+          <div class="list">
+            <div><b>01</b><span>AI 对已有系统一开始一无所知。</span></div>
+            <div><b>02</b><span>每次都让它重新查代码，会浪费大量上下文和时间。</span></div>
+            <div><b>03</b><span>推荐先让 AI 阅读项目，形成系统规格文档。</span></div>
+            <div><b>04</b><span>后续做功能时，先让它读规格文档，再提出需求。</span></div>
+          </div>
+        </div>
+        <div class="visual">
+          <svg viewBox="0 0 780 520">
+            <defs><marker id="arrow5" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="currentColor"/></marker></defs>
+            <rect class="node" x="50" y="150" width="190" height="210" rx="10"/>
+            <text class="svg-text" x="91" y="205">代码仓库</text>
+            <rect x="88" y="238" width="108" height="16" fill="currentColor" opacity=".18"/>
+            <rect x="88" y="270" width="126" height="16" fill="currentColor" opacity=".18"/>
+            <rect x="88" y="302" width="86" height="16" fill="currentColor" opacity=".18"/>
+            <rect class="node" x="305" y="110" width="200" height="290" rx="10"/>
+            <text class="svg-text" x="344" y="178">系统规格</text>
+            <text class="svg-text" x="363" y="212">文档</text>
+            <rect x="345" y="250" width="120" height="18" fill="var(--accent)" opacity=".42"/>
+            <rect x="345" y="284" width="94" height="18" fill="currentColor" opacity=".16"/>
+            <rect x="345" y="318" width="132" height="18" fill="currentColor" opacity=".16"/>
+            <rect class="node" x="565" y="150" width="170" height="210" rx="10"/>
+            <text class="svg-text" x="604" y="230">功能开发</text>
+            <text class="svg-mono" x="610" y="270">new session</text>
+            <path d="M248 255 H294" stroke="currentColor" stroke-width="2" marker-end="url(#arrow5)"/>
+            <path d="M512 255 H554" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrow5)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="foot"><div class="title">规格文档是高性价比上下文</div><div>Repository → Spec → Feature</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>Agent Skills · Workflow</div><div>13 / 18</div></div>
+      <div class="frame" style="justify-content:center">
+        <div class="kicker">复杂功能不要靠一句话硬冲</div>
+        <h2 class="h-xl">复杂功能推荐使用 Agent Skills</h2>
+        <p class="lead" style="max-width:78vw;margin-top:2vh">推荐使用 addyosmani/agent-skills，gok 项目已安装。它会把复杂需求拆成工作流，并在规格阶段主动确认不确定点。</p>
+        <div class="flow" style="margin-top:6vh">
+          <div class="flow-box"><strong>Spec</strong><span class="body">规格文档</span></div>
+          <div class="arrow">→</div>
+          <div class="flow-box"><strong>Plan</strong><span class="body">实施计划</span></div>
+          <div class="arrow">→</div>
+          <div class="flow-box"><strong>Build</strong><span class="body">编码实现</span></div>
+          <div class="arrow">→</div>
+          <div class="flow-box"><strong>Test</strong><span class="body">验证回归</span></div>
+        </div>
+        <div class="badge" style="margin-top:5vh">https://github.com/addyosmani/agent-skills</div>
+      </div>
+      <div class="foot"><div class="title">工作流比一句 prompt 更可靠</div><div>Spec · Plan · Build · Test</div></div>
+    </section>
+
+    <section class="slide dark">
+      <div class="chrome"><div>Requirement · Structure</div><div>14 / 18</div></div>
+      <div class="frame grid-2">
+        <div>
+          <div class="kicker">写清楚结构，不必写得像代码</div>
+          <h2 class="h-xl">如何向 AI 描述需求</h2>
+          <div class="list">
+            <div><b>01</b><span>静态类图可以转换成自然语言描述的 JSON 数据结构。</span></div>
+            <div><b>02</b><span>交互接口要说清输入、输出、状态变化和边界条件。</span></div>
+            <div><b>03</b><span>AI 往往能生成合理的类名、字段名、协议名称。</span></div>
+            <div><b>04</b><span>重点不是“写得像代码”，而是结构清楚、约束明确。</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="split-compare">
+            <div class="compare-col"><h3>模糊</h3><p class="body">做一个审批流，能驳回，也能通知人，权限别出问题。</p></div>
+            <div class="compare-col"><h3>结构化</h3><pre class="code" style="max-height:30vh;font-size:clamp(12px,.86vw,16px)">{
+  "entity": "ApprovalRequest",
+  "states": ["draft","pending","approved","rejected"],
+  "actions": {
+    "submit": "draft -> pending",
+    "reject": "pending -> rejected"
+  },
+  "guards": ["owner", "approver"]
+}</pre></div>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><div class="title">自然语言也可以很精确</div><div>JSON · API · Constraints</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>Positioning · Human in Loop</div><div>15 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">把它当成一位工程师</div>
+          <h2 class="h-xl">AI Agent 的定位</h2>
+          <div class="list">
+            <div><b>01</b><span>把 AI Agent 当成一位经验丰富的代码工程师。</span></div>
+            <div><b>02</b><span>它能处理繁琐编码细节、边界条件、复杂算法。</span></div>
+            <div><b>03</b><span>但它有时会为了达成目的不择手段。</span></div>
+            <div><b>04</b><span>可能不够关注效率、架构层次和长期可维护性。</span></div>
+            <div><b>05</b><span>所以 review 是非常必要的。</span></div>
+          </div>
+        </div>
+        <div class="visual">
+          <svg viewBox="0 0 780 520">
+            <defs><marker id="arrow6" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="currentColor"/></marker></defs>
+            <rect class="node" x="55" y="80" width="280" height="340" rx="12"/>
+            <text class="svg-text" x="105" y="130">AI 执行</text>
+            <rect x="98" y="178" width="178" height="22" fill="currentColor" opacity=".18"/>
+            <rect x="98" y="224" width="210" height="22" fill="currentColor" opacity=".18"/>
+            <rect x="98" y="270" width="146" height="22" fill="currentColor" opacity=".18"/>
+            <rect x="98" y="316" width="198" height="22" fill="var(--accent)" opacity=".34"/>
+            <text class="svg-mono" x="106" y="374">code / tests / fixes</text>
+            <rect class="node" x="445" y="80" width="280" height="340" rx="12"/>
+            <text class="svg-text" x="485" y="130">人类判断</text>
+            <circle cx="535" cy="230" r="50" fill="none" stroke="currentColor" opacity=".45"/>
+            <path d="M570 265 L650 340" fill="none" stroke="var(--accent)" stroke-width="4"/>
+            <text class="svg-mono" x="492" y="374">architecture / risk / review</text>
+            <path d="M346 250 H432" stroke="currentColor" stroke-width="2" marker-end="url(#arrow6)"/>
+            <path d="M432 285 H346" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrow6)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="foot"><div class="title">AI 负责执行，人负责判断</div><div>Human Review</div></div>
+    </section>
+
+    <section class="slide dark">
+      <div class="chrome"><div>Vibe Coding · Boundary</div><div>16 / 18</div></div>
+      <div class="frame grid-45-55">
+        <div>
+          <div class="kicker">可以许愿，但上线前必须清醒</div>
+          <h2 class="h-xl">许愿式编程的边界</h2>
+          <div class="split-compare" style="margin-top:5vh">
+            <div class="compare-col"><h3>适合</h3><p class="body">工具类代码、一次性脚本、原型验证、低风险自动化。</p></div>
+            <div class="compare-col"><h3>谨慎</h3><p class="body">核心业务架构、高风险线上逻辑、安全、权限、资金相关代码。</p></div>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="risk-grid">
+            <div class="risk-cell"><h3>低风险 / 一次性</h3><p>可以大胆让 AI 做，人工抽查结果。</p></div>
+            <div class="risk-cell"><h3>高风险 / 一次性</h3><p>可以辅助，但要明确边界和回滚。</p></div>
+            <div class="risk-cell"><h3>低风险 / 长期</h3><p>关注可维护性，别留下看不懂的实现。</p></div>
+            <div class="risk-cell"><h3>高风险 / 长期</h3><p>必须设计、评审、测试、灰度，一个都不能省。</p></div>
+            <div class="axis-x">一次性 → 长期维护</div>
+            <div class="axis-y">低风险 → 高风险</div>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><div class="title">Vibe Coding 不是免 review</div><div>Risk Matrix</div></div>
+    </section>
+
+    <section class="slide light">
+      <div class="chrome"><div>Takeaway · Practice</div><div>17 / 18</div></div>
+      <div class="frame" style="justify-content:center">
+        <div class="kicker">可以明天就开始用</div>
+        <h2 class="h-xl">实践建议总结</h2>
+        <div class="checklist">
+          <div class="check"><span>1</span><p>先理解机制，再决定怎么用。</p></div>
+          <div class="check"><span>2</span><p>控制会话边界，避免上下文污染。</p></div>
+          <div class="check"><span>3</span><p>长任务阶段性总结，必要时新开会话。</p></div>
+          <div class="check"><span>4</span><p>让 AI 先读规格文档，再做需求。</p></div>
+          <div class="check"><span>5</span><p>复杂功能用工作流，不要只靠一句话。</p></div>
+          <div class="check"><span>6</span><p>AI 负责执行，人负责判断。</p></div>
+        </div>
+      </div>
+      <div class="foot"><div class="title">六条够用的经验</div><div>Checklist</div></div>
+    </section>
+
+    <section class="slide hero dark">
+      <div class="chrome"><div>Closing · Q&A</div><div>18 / 18</div></div>
+      <div class="frame center">
+        <div class="kicker">Final Answer</div>
+        <h2 class="h-hero" style="font-size:clamp(44px,6.4vw,116px)">让 AI 成为<br>工程能力的放大器</h2>
+        <p class="lead" style="max-width:76vw;margin-top:4vh">不是替代思考，而是把重复劳动交出去，把判断力留下来。</p>
+        <div class="rule" style="max-width:48vw"></div>
+        <div class="quote">Q&A</div>
+      </div>
+      <div class="foot"><div class="title">AI 编程经验分享</div><div>Thank You</div></div>
+    </section>
+  </main>
+  <button class="nav-btn" id="prev" aria-label="上一页">‹</button>
+  <button class="nav-btn" id="next" aria-label="下一页">›</button>
+  <div class="pager" id="pager">1 / 18</div>
+  <div class="progress-wrap"><div id="progress"></div></div>
+  <script>
+    const deck = document.getElementById('deck');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const progress = document.getElementById('progress');
+    const pager = document.getElementById('pager');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    let index = 0;
+
+    function go(to){
+      index = Math.max(0, Math.min(slides.length - 1, to));
+      deck.style.transform = `translateX(${-index * 100}vw)`;
+      pager.textContent = `${index + 1} / ${slides.length}`;
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      prev.disabled = index === 0;
+      next.disabled = index === slides.length - 1;
+      document.body.classList.toggle('light-bg', slides[index].classList.contains('light'));
+      location.hash = `slide-${index + 1}`;
+    }
+    prev.addEventListener('click', () => go(index - 1));
+    next.addEventListener('click', () => go(index + 1));
+    addEventListener('keydown', e => {
+      if(e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') go(index + 1);
+      if(e.key === 'ArrowLeft' || e.key === 'PageUp') go(index - 1);
+      if(e.key === 'Home') go(0);
+      if(e.key === 'End') go(slides.length - 1);
+    });
+    let startX = null;
+    addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+    addEventListener('touchend', e => {
+      if(startX === null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if(Math.abs(dx) > 45) go(index + (dx < 0 ? 1 : -1));
+      startX = null;
+    }, {passive:true});
+
+    const canvas = document.getElementById('texture');
+    const ctx = canvas.getContext('2d');
+    let t = 0;
+    function resize(){ canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; }
+    function draw(){
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+      ctx.globalAlpha = .42;
+      for(let i=0;i<38;i++){
+        const y = (h * (i / 38)) + Math.sin(t/40 + i*.7) * 20 * devicePixelRatio;
+        ctx.beginPath();
+        for(let x=0;x<=w;x+=28*devicePixelRatio){
+          const yy = y + Math.sin(x/180 + t/55 + i) * 12 * devicePixelRatio;
+          if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
+        }
+        ctx.strokeStyle = i % 5 === 0 ? 'rgba(184,138,66,.32)' : 'rgba(241,243,245,.13)';
+        ctx.lineWidth = devicePixelRatio;
+        ctx.stroke();
+      }
+      t++;
+      requestAnimationFrame(draw);
+    }
+    resize();
+    addEventListener('resize', resize);
+    const hash = location.hash.match(/slide-(\d+)/);
+    deck.classList.add('no-anim');
+    go(hash ? Number(hash[1])-1 : 0);
+    requestAnimationFrame(() => requestAnimationFrame(() => deck.classList.remove('no-anim')));
+    draw();
+  </script>
+</body>
+</html>

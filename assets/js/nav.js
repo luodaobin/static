@@ -6,6 +6,7 @@ const themes = [
     // 格式: { name: "主题目录名", label: "展示名称", desc: "简短描述" }
     // 示例: { name: "portfolio", label: "作品集", desc: "展示个人项目与经历" }
     { name: "learn-rmb", label: "认识人民币", desc: "小学一年级数学课件，认识中国钱币" },
+    { name: "VibCodingProgress", label: "FC模拟器开发流程", desc: "Prompt工程四步流程编辑器" },
 ];
 
 /**
@@ -15,7 +16,7 @@ function renderNav() {
     const navLinks = document.getElementById('navLinks');
     if (!navLinks) return;
 
-    // 先清空现有内容（除了可能存在的其他固定链接）
+    // 先清空现有内容
     navLinks.innerHTML = '';
 
     themes.forEach(theme => {

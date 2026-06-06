@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FC模拟器开发流程 — Prompt工程四步编辑器</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#dc2626',
+                        secondary: '#4f46e5',
+                        neutral: '#1f2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-active {
+                @apply border-b-2 border-primary text-primary font-bold;
+            }
+            .btn-base {
+                @apply px-4 py-2 rounded-lg transition-all duration-200 font-medium text-sm;
+            }
+            .card-shadow {
+                @apply shadow-lg rounded-xl bg-white p-6;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+<!-- ===== 导航栏 ===== -->
+<nav class="navbar" id="navbar">
+    <div class="nav-inner">
+        <a href="../index.html" class="nav-brand">LuoDaoBin</a>
+        <a href="../index.html" class="nav-link-home">首页</a>
+        <button class="nav-toggle" id="navToggle" aria-label="切换导航">
+            <span></span>
+            <span></span>
+        </button>
+        <div class="nav-links" id="navLinks"></div>
+    </div>
+</nav>
+
+<div class="container mx-auto px-4 py-8 max-w-5xl" style="padding-top: 80px;">
+    <!-- 头部标题 -->
+    <header class="mb-8 text-center">
+        <h1 class="text-[clamp(1.8rem,3vw,2.8rem)] font-bold text-neutral">Prompt工程四步开发流程编辑器</h1>
+        <p class="text-gray-500 mt-2">基于FC模拟器(Python超级玛丽)项目流程 | 四阶段提示词模板管理</p>
+    </header>
+
+    <!-- Tab标签栏 -->
+    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+        <button class="tab-btn tab-active py-3 px-5 whitespace-nowrap" data-tab="step1">第一步：需求讨论</button>
+        <button class="tab-btn py-3 px-5 whitespace-nowrap text-gray-600 hover:text-primary" data-tab="step2">第二步：概要+详细设计</button>
+        <button class="tab-btn py-3 px-5 whitespace-nowrap text-gray-600 hover:text-primary" data-tab="step3">第三步：任务拆分</button>
+        <button class="tab-btn py-3 px-5 whitespace-nowrap text-gray-600 hover:text-primary" data-tab="step4">第四步：代码实现(Agent生成)</button>
+    </div>
+
+    <!-- 内容容器 -->
+    <div class="tab-content-wrap">
+        <!-- Step1 需求讨论 -->
+        <div id="step1" class="tab-content">
+            <div class="card-shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-neutral">一、和AI讨论需求 · 生成proposal.md</h2>
+                    <div class="space-x-2">
+                        <button onclick="resetPrompt('step1')" class="btn-base bg-gray-200 hover:bg-gray-300 text-neutral">
+                            <i class="fa fa-refresh mr-1"></i>重置默认
+                        </button>
+                        <button onclick="copyPrompt('step1')" class="btn-base bg-secondary hover:bg-indigo-700 text-white">
+                            <i class="fa fa-copy mr-1"></i>复制内容
+                        </button>
+                    </div>
+                </div>
+                <textarea id="step1-text" class="w-full min-h-[420px] border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y text-sm text-gray-900">目标:
+用Python开发一个fc模拟器，最终能跑超级玛丽，现在帮我完成需求文档
+
+输入:
+当前目录是一个uv的python工程，rom目录下有超级玛丽镜像
+
+输出:
+请在doc目录下生成需求文档proposal.md
+
+步骤:
+我不了解任何fc模拟器的知识，使用提问的方式帮助我确认需求
+不要猜测我的意图
+不明确的地方必须向我提问</textarea>
+            </div>
+        </div>
+
+        <!-- Step2 设计阶段 -->
+        <div id="step2" class="tab-content hidden">
+            <div class="card-shadow space-y-6">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-neutral">2.1 概要设计 · high-level-design.md</h2>
+                        <div class="space-x-2">
+                            <button onclick="resetPrompt('step2-1')" class="btn-base bg-gray-200 hover:bg-gray-300 text-neutral">
+                                <i class="fa fa-refresh mr-1"></i>重置默认
+                            </button>
+                            <button onclick="copyPrompt('step2-1')" class="btn-base bg-secondary hover:bg-indigo-700 text-white">
+                                <i class="fa fa-copy mr-1"></i>复制内容
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="step2-1-text" class="w-full min-h-[220px] border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y text-sm text-gray-900">目标:
+根据需求文档生成概要设计文档
+
+输入:
+需求文档 doc/proposal.md
+
+输出:
+概要设计文档 doc/high-level-design.md
+
+步骤:
+根据需求文档的内容，划分出模块，识别模块与模块之间的关系。
+生成概要设计文档。
+不要猜测我的意图。任何不明确的地方都必须都向我提问。</textarea>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-neutral">2.2 详细设计 · detailed-design.md</h2>
+                        <div class="space-x-2">
+                            <button onclick="resetPrompt('step2-2')" class="btn-base bg-gray-200 hover:bg-gray-300 text-neutral">
+                                <i class="fa fa-refresh mr-1"></i>重置默认
+                            </button>
+                            <button onclick="copyPrompt('step2-2')" class="btn-base bg-secondary hover:bg-indigo-700 text-white">
+                                <i class="fa fa-copy mr-1"></i>复制内容
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="step2-2-text" class="w-full min-h-[220px] border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y text-sm text-gray-900">目标:
+根据需求文档生成详细设计文档
+
+输入:
+需求文档 doc/proposal.md
+
+输出:
+详细设计文档 doc/detailed-design.md
+
+步骤:
+根据需求文档的内容，根据里面划分出的模块编写详细设计文档。
+模块与模块之间尽量保持相互独立，可以独立进行测试。
+不要猜测我的意图。任何不明确的地方都必须都向我提问。</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step3 任务划分 -->
+        <div id="step3" class="tab-content hidden">
+            <div class="card-shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-neutral">三、拆分最小可执行任务 · tasks目录</h2>
+                    <div class="space-x-2">
+                        <button onclick="resetPrompt('step3')" class="btn-base bg-gray-200 hover:bg-gray-300 text-neutral">
+                            <i class="fa fa-refresh mr-1"></i>重置默认
+                        </button>
+                        <button onclick="copyPrompt('step3')" class="btn-base bg-secondary hover:bg-indigo-700 text-white">
+                            <i class="fa fa-copy mr-1"></i>复制内容
+                        </button>
+                    </div>
+                </div>
+                <textarea id="step3-text" class="w-full min-h-[360px] border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y text-sm text-gray-900">目标:
+为每个模块划分最小可执行任务
+
+输入:
+需求文档 doc/proposal.md
+详细设计 doc/detailed-design.md
+
+输出:
+任务列表
+- doc/tasks/<module-name>.md（每个模块对应一个）
+- doc/tasks/progress.md（总体进度）
+
+步骤:
+根据需求文档和详细设计。
+为每一个模块生成Vibe Coding用的最小任务。
+每个模块对应一个<module-name>.md。
+用check list表示子任务是否完成。
+progress.md中用check list表示模块是否已经完成</textarea>
+            </div>
+        </div>
+
+        <!-- Step4 代码实现Agent -->
+        <div id="step4" class="tab-content hidden">
+            <div class="card-shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-neutral">四、生成Agent编码Prompt · prompt.md</h2>
+                    <div class="space-x-2">
+                        <button onclick="resetPrompt('step4')" class="btn-base bg-gray-200 hover:bg-gray-300 text-neutral">
+                            <i class="fa fa-refresh mr-1"></i>重置默认
+                        </button>
+                        <button onclick="copyPrompt('step4')" class="btn-base bg-secondary hover:bg-indigo-700 text-white">
+                            <i class="fa fa-copy mr-1"></i>复制内容
+                        </button>
+                    </div>
+                </div>
+                <textarea id="step4-text" class="w-full min-h-[420px] border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y text-sm text-gray-900">目标:
+生成Vibe Coding用的Prompt
+
+输入:
+需求文档 doc/proposal.md
+详细设计 doc/detailed-design.md
+任务划分 doc/tasks
+
+输出:
+doc/prompt.md
+
+步骤:
+阅读输入信息，了解当前要实现的工程
+生成Agent prompt.md作为Vibe Coding的起始Prompt
+主Agent，用来跟踪整体的进度
+主Agent生成子Agent，用来实现每一个模块，并完成测试
+整个过程不会有人工参与
+代码必须有完整的pytest单元测试，并通过mypy和ruff检测
+生成prompt过程中，如果有任何不明确的地方都必须向我提问。</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部备注 -->
+    <footer class="mt-8 text-center text-gray-400 text-sm">
+        <p>四阶段提示词工程模板 | 点击标签切换步骤，支持编辑/重置/一键复制</p>
+    </footer>
+</div>
+
+<script>
+// 默认原始模板数据
+const defaultData = {
+    step1: `目标:
+用Python开发一个fc模拟器，最终能跑超级玛丽，现在帮我完成需求文档
+
+输入:
+当前目录是一个uv的python工程，rom目录下有超级玛丽镜像
+
+输出:
+请在doc目录下生成需求文档proposal.md
+
+步骤:
+我不了解任何fc模拟器的知识，使用提问的方式帮助我确认需求
+不要猜测我的意图
+不明确的地方必须向我提问`,
+    "step2-1": `目标:
+根据需求文档生成概要设计文档
+
+输入:
+需求文档 doc/proposal.md
+
+输出:
+概要设计文档 doc/high-level-design.md
+
+步骤:
+根据需求文档的内容，划分出模块，识别模块与模块之间的关系。
+生成概要设计文档。
+不要猜测我的意图。任何不明确的地方都必须都向我提问。`,
+    "step2-2": `目标:
+根据需求文档生成详细设计文档
+
+输入:
+需求文档 doc/proposal.md
+
+输出:
+详细设计文档 doc/detailed-design.md
+
+步骤:
+根据需求文档的内容，根据里面划分出的模块编写详细设计文档。
+模块与模块之间尽量保持相互独立，可以独立进行测试。
+不要猜测我的意图。任何不明确的地方都必须都向我提问。`,
+    step3: `目标:
+为每个模块划分最小可执行任务
+
+输入:
+需求文档 doc/proposal.md
+详细设计 doc/detailed-design.md
+
+输出:
+任务列表
+- doc/tasks/<module-name>.md（每个模块对应一个）
+- doc/tasks/progress.md（总体进度）
+
+步骤:
+根据需求文档和详细设计。
+为每一个模块生成Vibe Coding用的最小任务。
+每个模块对应一个<module-name>.md。
+用check list表示子任务是否完成。
+progress.md中用check list表示模块是否已经完成`,
+    step4: `目标:
+生成Vibe Coding用的Prompt
+
+输入:
+需求文档 doc/proposal.md
+详细设计 doc/detailed-design.md
+任务划分 doc/tasks
+
+输出:
+doc/prompt.md
+
+步骤:
+阅读输入信息，了解当前要实现的工程
+生成Agent prompt.md作为Vibe Coding的起始Prompt
+主Agent，用来跟踪整体的进度
+主Agent生成子Agent，用来实现每一个模块，并完成测试
+整个过程不会有人工参与
+代码必须有完整的pytest单元测试，并通过mypy和ruff检测
+生成prompt过程中，如果有任何不明确的地方都必须向我提问。`
+}
+
+// Tab切换逻辑
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+tabBtns.forEach(btn=>{
+    btn.onclick = ()=>{
+        const targetId = btn.dataset.tab;
+        // 切换按钮样式
+        tabBtns.forEach(b=>{
+            b.classList.remove('tab-active');
+            b.classList.add('text-gray-600','hover:text-primary');
+        })
+        btn.classList.add('tab-active');
+        btn.classList.remove('text-gray-600','hover:text-primary');
+        // 切换内容
+        tabContents.forEach(item=>item.classList.add('hidden'))
+        document.getElementById(targetId).classList.remove('hidden');
+    }
+})
+
+// 重置函数
+function resetPrompt(id){
+    const dom = document.getElementById(`${id}-text`);
+    dom.value = defaultData[id];
+}
+// 复制函数
+function copyPrompt(id){
+    const dom = document.getElementById(`${id}-text`);
+    dom.select();
+    navigator.clipboard.writeText(dom.value).then(()=>{
+        alert('✅ 提示词已复制到剪贴板！');
+    })
+}
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f9f6">
+  <title>PromptList · AI 提示词集合</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f9f6;
+      --paper: #ffffff;
+      --ink: #19312b;
+      --muted: #64766e;
+      --line: #e2eae3;
+      --accent: #2c8062;
+      --accent-dark: #20644d;
+      --accent-soft: #eaf5ee;
+      --shadow: 0 18px 45px rgba(27, 65, 47, .055);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    :focus-visible { outline: 3px solid #6bb998; outline-offset: 3px; }
+    .shell { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+    /* The theme is self-contained; the header keeps the site's fixed glass navigation pattern. */
+    .site-header {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 20;
+      border-bottom: 1px solid rgba(215, 228, 218, .72);
+      background: rgba(247, 249, 246, .88);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; min-height: 72px; }
+    .brand { display: inline-flex; align-items: center; gap: 12px; font-size: 1.08rem; font-weight: 750; letter-spacing: -.04em; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: var(--ink); color: #fff; font-size: 1rem; letter-spacing: 0; }
+    .brand span:last-child span { color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: .88rem; font-weight: 600; }
+    .nav-links a:hover { color: var(--accent-dark); }
+    .nav-toggle { display: none; width: 42px; height: 42px; place-items: center; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); }
+    .nav-toggle svg { width: 20px; height: 20px; }
+
+    main { padding-top: 72px; }
+    .workspace { padding: 26px 0 58px; }
+    .workspace-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+    .workspace-heading h1 { margin: 0; font-size: 1.45rem; line-height: 1.3; letter-spacing: -.035em; }
+    .library-count { color: var(--muted); font-size: .82rem; white-space: nowrap; }
+    .search-panel { position: relative; z-index: 1; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: var(--shadow); }
+    .local-db-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 22px; padding: 15px 17px; border: 1px solid #cfe3d5; border-radius: 13px; background: var(--accent-soft); }
+    .local-db-panel[hidden] { display: none; }
+    .local-db-panel p { flex: 1 1 260px; margin: 0; color: #426b54; font-size: .8rem; }
+    .local-db-button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 9px; background: var(--accent); color: #fff; font-size: .8rem; font-weight: 700; }
+    .local-db-button:hover { background: var(--accent-dark); }
+    .tag-filter { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .tag-filter-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .tag-filter-heading strong { font-size: .78rem; }
+    .clear-tags { padding: 2px 0; border: 0; background: none; color: var(--accent); font-size: .76rem; font-weight: 700; }
+    .clear-tags:hover { color: var(--accent-dark); text-decoration: underline; }
+    .clear-tags[hidden] { display: none; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 9px; min-height: 36px; align-items: center; }
+    .tag-chip { min-height: 36px; padding: 5px 13px; border: 1px solid #d9e6dc; border-radius: 100px; background: #f9fbf8; color: #526d5e; font-size: .8rem; font-weight: 650; transition: background .18s, color .18s, border-color .18s; }
+    .tag-chip:hover { border-color: #81b899; color: var(--accent-dark); }
+    .tag-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .tag-placeholder { color: #91a199; font-size: .8rem; }
+    .tag-help { margin: 8px 0 0; color: #91a199; font-size: .73rem; }
+    .filters { display: grid; grid-template-columns: 1fr; }
+    .field { position: relative; }
+    .field label { display: block; margin-bottom: 8px; color: var(--muted); font-size: .78rem; font-weight: 700; }
+    .input-wrap { position: relative; }
+    .input-wrap svg { position: absolute; top: 50%; left: 16px; width: 19px; height: 19px; transform: translateY(-50%); color: #8ca69a; pointer-events: none; }
+    input { width: 100%; height: 46px; padding: 0 16px 0 46px; border: 1px solid #dce7df; border-radius: 12px; background: #fbfcfa; color: var(--ink); outline: none; transition: border-color .18s, box-shadow .18s; }
+    input::placeholder { color: #9baaa0; }
+    input:focus { border-color: #63b487; box-shadow: 0 0 0 4px rgba(99, 180, 135, .13); }
+    input:disabled { cursor: wait; opacity: .68; }
+
+    .results-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 24px 2px 12px; }
+    .results-heading h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.035em; }
+    .results-heading h2 span { margin-left: 9px; color: var(--accent); font-size: .95rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+    .status { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .8rem; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #e8ae5c; }
+    .status[data-state="ready"] .status-dot { background: #5ab47f; }
+    .status[data-state="error"] .status-dot { background: #dc756c; }
+    .status[data-state="waiting"] .status-dot { background: #91a199; }
+    .status[data-state="loading"] .status-dot { animation: pulse 1s ease-in-out infinite alternate; }
+    @keyframes pulse { to { opacity: .3; } }
+    .result-list { display: grid; gap: 13px; }
+    .prompt-card { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--paper); box-shadow: 0 5px 22px rgba(27, 65, 47, .025); transition: border-color .18s, box-shadow .18s; }
+    .prompt-card:hover, .prompt-card[open] { border-color: #cbded0; box-shadow: var(--shadow); }
+    .prompt-card summary { display: flex; align-items: center; gap: 15px; min-height: 87px; padding: 18px 23px; cursor: pointer; list-style: none; }
+    .prompt-card summary::-webkit-details-marker { display: none; }
+    .item-number { display: grid; place-items: center; flex: 0 0 39px; height: 39px; border-radius: 11px; background: var(--accent-soft); color: var(--accent-dark); font-size: .76rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+    .item-main { min-width: 0; flex: 1; }
+    .item-title { display: block; color: var(--ink); font-size: .99rem; font-weight: 730; line-height: 1.4; overflow-wrap: anywhere; }
+    .item-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+    .item-tag { padding: 1px 8px; border-radius: 100px; background: var(--accent-soft); color: #4a7a5c; font-size: .68rem; font-weight: 650; }
+    .item-untagged { color: var(--muted); font-size: .74rem; }
+    .item-chevron { display: grid; place-items: center; flex: 0 0 29px; width: 29px; height: 29px; border: 1px solid var(--line); border-radius: 9px; color: #789484; transition: transform .2s, background .2s; }
+    .item-chevron svg { width: 15px; height: 15px; }
+    .prompt-card[open] .item-chevron { transform: rotate(180deg); background: var(--accent-soft); }
+    .prompt-body { border-top: 1px solid var(--line); padding: 23px; background: linear-gradient(180deg, #fcfdfa, #fff); }
+    .content-label { display: block; margin-bottom: 10px; color: #6e8978; font-size: .7rem; font-weight: 780; letter-spacing: .12em; text-transform: uppercase; }
+    .prompt-content { margin: 0; padding: 19px 21px; border: 1px solid #e2ebe4; border-radius: 12px; background: #f7faf7; color: #263e33; font: .88rem/1.8 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .remark { margin: 17px 1px 0; color: #62756c; font-size: .86rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .remark strong { color: var(--ink); font-weight: 700; }
+    .card-actions { display: flex; justify-content: flex-end; margin-top: 17px; }
+    .copy-button { display: inline-flex; align-items: center; gap: 8px; min-height: 39px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font-size: .79rem; font-weight: 700; transition: background .18s, transform .18s; }
+    .copy-button:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .copy-button svg { width: 15px; height: 15px; }
+    .empty-state { display: grid; justify-items: center; padding: 45px 20px; border: 1px dashed #cfdfd3; border-radius: 18px; background: rgba(255,255,255,.7); text-align: center; }
+    .empty-icon { display: grid; place-items: center; width: 49px; height: 49px; margin-bottom: 13px; border-radius: 15px; background: var(--accent-soft); color: var(--accent); }
+    .empty-icon svg { width: 23px; height: 23px; }
+    .empty-state h3 { margin: 0 0 5px; font-size: 1rem; }
+    .empty-state p { margin: 0; color: var(--muted); font-size: .84rem; }
+    .toast { position: fixed; z-index: 50; right: 24px; bottom: 24px; max-width: min(340px, calc(100vw - 48px)); padding: 12px 17px; border-radius: 12px; background: var(--ink); color: #fff; font-size: .85rem; box-shadow: 0 16px 36px rgba(25,49,43,.2); }
+    .toast[hidden] { display: none; }
+    .site-footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px 0 34px; border-top: 1px solid var(--line); color: #90a096; font-size: .77rem; }
+
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 32px, 1120px); }
+      .header-inner { min-height: 64px; }
+      .nav-toggle { display: grid; }
+      .nav-links { display: none; position: absolute; top: 63px; right: 16px; left: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: #fff; box-shadow: var(--shadow); }
+      .nav-links.open { display: flex; }
+      main { padding-top: 64px; }
+      .workspace { padding-top: 18px; padding-bottom: 42px; }
+      .workspace-heading h1 { font-size: 1.25rem; }
+      .search-panel { padding: 16px; }
+      .tag-list { gap: 8px; }
+      .results-heading { margin-top: 22px; }
+      .prompt-card summary { padding: 16px; }
+      .prompt-body { padding: 16px; }
+      .prompt-content { padding: 15px; font-size: .82rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="../index.html" aria-label="返回网站首页"><span class="brand-mark">P</span><span>Prompt<span>List</span></span></a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="切换导航" aria-controls="navLinks" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="nav-links" id="navLinks" aria-label="页面导航"><a href="../index.html">返回首页 ↗</a></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="workspace shell" aria-label="提示词查询">
+      <div class="workspace-heading"><h1>提示词库</h1><span class="library-count">共 <span id="totalCount">—</span> 条提示词</span></div>
+      <div class="search-panel">
+        <div class="local-db-panel" id="localDbPanel" hidden>
+          <p>直接打开本地 HTML 时，浏览器不能自动读取相邻的数据库。选择同目录的 data.db 后即可查询；文件只在本机浏览器中读取。</p>
+          <button class="local-db-button" id="chooseDbButton" type="button">选择 data.db</button>
+          <input id="localDbInput" type="file" accept=".db,application/octet-stream" hidden>
+        </div>
+        <div class="tag-filter">
+          <div class="tag-filter-heading"><strong id="tagFilterLabel">标签筛选</strong><button class="clear-tags" id="clearTags" type="button" hidden>清除已选</button></div>
+          <div class="tag-list" id="tagList" role="group" aria-labelledby="tagFilterLabel"><span class="tag-placeholder">正在加载标签…</span></div>
+          <p class="tag-help">可选择多个标签；结果需同时包含所有已选标签。再次点击即可取消。</p>
+        </div>
+        <div class="filters">
+          <div class="field"><label for="searchInput">标题关键词</label><div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+            <input id="searchInput" type="search" placeholder="搜索提示词标题…" autocomplete="off" disabled>
+          </div></div>
+        </div>
+      </div>
+      <div class="results-heading"><h2>提示词列表 <span id="resultCount"></span></h2><div class="status" id="loadStatus" data-state="loading" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="statusText">数据库加载中…</span></div></div>
+      <div class="result-list" id="resultList" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="shell site-footer"><span>PromptList · 提示词集合</span><span>只读展示 · 本地查询</span></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/sql-wasm.js"></script>
+  <script>
+    // sql.js 的 JS 与 WASM 使用同一个固定版本，数据库只在浏览器内存中查询。
+    const SQL_JS_BASE = 'https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/';
+    const searchInput = document.getElementById('searchInput');
+    const localDbPanel = document.getElementById('localDbPanel');
+    const localDbInput = document.getElementById('localDbInput');
+    const tagList = document.getElementById('tagList');
+    const clearTags = document.getElementById('clearTags');
+    const resultList = document.getElementById('resultList');
+    const resultCount = document.getElementById('resultCount');
+    const totalCount = document.getElementById('totalCount');
+    const loadStatus = document.getElementById('loadStatus');
+    const statusText = document.getElementById('statusText');
+    const toast = document.getElementById('toast');
+    let database = null;
+    let toastTimer;
+    const selectedTagIds = new Set();
+    const tagNamesByPrompt = new Map();
+
+    function setStatus(message, state) {
+      statusText.textContent = message;
+      loadStatus.dataset.state = state;
+    }
+
+    // 参数绑定防止 SQL 注入；转义通配符让用户输入的 % 和 _ 按普通字符搜索。
+    function escapeLike(value) {
+      return value.replace(/[\\%_]/g, character => '\\' + character);
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.hidden = true; }, 2600);
+    }
+
+    function showEmpty(title, description) {
+      const state = document.createElement('div');
+      state.className = 'empty-state';
+      state.innerHTML = '<span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5"/></svg></span>';
+      const heading = document.createElement('h3');
+      heading.textContent = title;
+      const detail = document.createElement('p');
+      detail.textContent = description;
+      state.append(heading, detail);
+      resultList.replaceChildren(state);
+    }
+
+    // 所选标签使用 AND 语义：提示词必须同时拥有每个选中的标签。
+    // 每次搜索均在已下载的 SQLite 数据库上执行，不发送搜索词到网络。
+    function queryPrompts() {
+      const keyword = searchInput.value.trim();
+      const tagIds = [...selectedTagIds];
+      const tagFilter = tagIds.length
+        ? `AND p.id IN (
+            SELECT pt.prompt_id FROM prompt_tags AS pt
+            WHERE pt.tag_id IN (${tagIds.map(() => '?').join(',')})
+            GROUP BY pt.prompt_id HAVING COUNT(*) = ?
+          ) `
+        : '';
+      const statement = database.prepare(
+        "SELECT p.id, p.title, p.content, p.remark FROM prompts AS p " +
+        "WHERE p.title LIKE ? ESCAPE '\\' " + tagFilter +
+        "ORDER BY p.id DESC"
+      );
+      const rows = [];
+      try {
+        statement.bind(['%' + escapeLike(keyword) + '%', ...tagIds, ...(tagIds.length ? [tagIds.length] : [])]);
+        while (statement.step()) rows.push(statement.getAsObject());
+      } finally {
+        statement.free();
+      }
+      renderPrompts(rows);
+    }
+
+    function renderPrompts(rows) {
+      resultCount.textContent = String(rows.length);
+      if (rows.length === 0) {
+        showEmpty('没有找到符合条件的提示词',
+          totalCount.textContent === '0' ? '数据库已加载，等待导入提示词内容。' : '试试其他标题关键词或切换标签。');
+        return;
+      }
+
+      // 数据库内容一律使用 textContent 写入，避免提示词中的 HTML 被执行。
+      const fragment = document.createDocumentFragment();
+      rows.forEach((row, index) => {
+        const card = document.createElement('details');
+        card.className = 'prompt-card';
+        const summary = document.createElement('summary');
+        const number = document.createElement('span');
+        number.className = 'item-number';
+        number.textContent = String(index + 1).padStart(2, '0');
+        const main = document.createElement('span');
+        main.className = 'item-main';
+        const title = document.createElement('span');
+        title.className = 'item-title';
+        title.textContent = row.title;
+        const itemTags = document.createElement('span');
+        itemTags.className = 'item-tags';
+        const names = tagNamesByPrompt.get(row.id) || [];
+        if (names.length) {
+          names.forEach(name => {
+            const tag = document.createElement('span');
+            tag.className = 'item-tag';
+            tag.textContent = name;
+            itemTags.append(tag);
+          });
+        } else {
+          const untagged = document.createElement('span');
+          untagged.className = 'item-untagged';
+          untagged.textContent = '未设置标签';
+          itemTags.append(untagged);
+        }
+        main.append(title, itemTags);
+        const chevron = document.createElement('span');
+        chevron.className = 'item-chevron';
+        chevron.setAttribute('aria-hidden', 'true');
+        chevron.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m5 9 7 7 7-7"/></svg>';
+        summary.append(number, main, chevron);
+
+        const body = document.createElement('div');
+        body.className = 'prompt-body';
+        const contentLabel = document.createElement('span');
+        contentLabel.className = 'content-label';
+        contentLabel.textContent = 'PROMPT CONTENT';
+        const content = document.createElement('pre');
+        content.className = 'prompt-content';
+        content.textContent = row.content;
+        body.append(contentLabel, content);
+        if (row.remark) {
+          const remark = document.createElement('p');
+          remark.className = 'remark';
+          const remarkLabel = document.createElement('strong');
+          remarkLabel.textContent = '备注：';
+          remark.append(remarkLabel, document.createTextNode(row.remark));
+          body.append(remark);
+        }
+        const actions = document.createElement('div');
+        actions.className = 'card-actions';
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.type = 'button';
+        copyButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>复制提示词';
+        copyButton.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(row.content);
+            showToast('复制成功，提示词已进入剪贴板');
+          } catch (error) {
+            showToast('复制失败，请检查浏览器的剪贴板权限');
+          }
+        });
+        actions.append(copyButton);
+        body.append(actions);
+        card.append(summary, body);
+        fragment.append(card);
+      });
+      resultList.replaceChildren(fragment);
+    }
+
+    async function loadDatabase(localFile = null) {
+      // file:// 页面不能自动 fetch 相邻文件；用户选择文件后用 File API 在本机读取。
+      if (location.protocol === 'file:' && !localFile) {
+        localDbPanel.hidden = false;
+        tagList.querySelector('.tag-placeholder').textContent = '选择数据库后显示标签';
+        setStatus('请选择本地 data.db', 'waiting');
+        showEmpty('请先选择 data.db', '选择与 index.html 同目录的数据库文件，即可查看提示词。');
+        return;
+      }
+      if (database) database.close();
+      database = null;
+      tagNamesByPrompt.clear();
+      selectedTagIds.clear();
+      clearTags.hidden = true;
+      searchInput.disabled = true;
+      totalCount.textContent = '—';
+      resultCount.textContent = '';
+      resultList.replaceChildren();
+      const loadingLabel = document.createElement('span');
+      loadingLabel.className = 'tag-placeholder';
+      loadingLabel.textContent = '正在加载标签…';
+      tagList.replaceChildren(loadingLabel);
+      setStatus('数据库加载中…', 'loading');
+      try {
+        if (typeof initSqlJs !== 'function') throw new Error('sql.js 加载失败');
+        const SQL = await initSqlJs({ locateFile: file => SQL_JS_BASE + file });
+        // 通过 HTTP 访问时自动下载静态数据库，所有查询仍只在浏览器内执行。
+        let buffer;
+        if (localFile) {
+          buffer = await localFile.arrayBuffer();
+        } else {
+          const response = await fetch('/promptlist/data.db');
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          buffer = await response.arrayBuffer();
+        }
+        const bytes = new Uint8Array(buffer);
+        const signature = new TextDecoder().decode(bytes.slice(0, 16));
+        if (signature !== 'SQLite format 3\0') throw new Error('data.db 不是有效的 SQLite 文件');
+        database = new SQL.Database(bytes);
+        database.exec('PRAGMA query_only = ON');
+
+        // 标签及提示词关联都来自数据库，页面不硬编码标签名称。
+        const tags = database.exec('SELECT id, name FROM tags ORDER BY name');
+        const tagFragment = document.createDocumentFragment();
+        for (const [id, name] of (tags[0]?.values || [])) {
+          const button = document.createElement('button');
+          button.className = 'tag-chip';
+          button.type = 'button';
+          button.dataset.tagId = String(id);
+          button.setAttribute('aria-pressed', 'false');
+          button.textContent = name;
+          tagFragment.append(button);
+        }
+        if (tagFragment.childNodes.length) {
+          tagList.replaceChildren(tagFragment);
+        } else {
+          const placeholder = document.createElement('span');
+          placeholder.className = 'tag-placeholder';
+          placeholder.textContent = '暂无标签';
+          tagList.replaceChildren(placeholder);
+        }
+        const links = database.exec(
+          'SELECT pt.prompt_id, t.name FROM prompt_tags AS pt JOIN tags AS t ON t.id = pt.tag_id ORDER BY t.name'
+        );
+        for (const [promptId, name] of (links[0]?.values || [])) {
+          if (!tagNamesByPrompt.has(promptId)) tagNamesByPrompt.set(promptId, []);
+          tagNamesByPrompt.get(promptId).push(name);
+        }
+        totalCount.textContent = String(database.exec('SELECT COUNT(*) FROM prompts')[0].values[0][0]);
+        searchInput.disabled = false;
+        setStatus('数据库加载完成', 'ready');
+        queryPrompts();
+      } catch (error) {
+        console.error('PromptList 数据库加载失败：', error);
+        setStatus('数据库加载失败', 'error');
+        const placeholder = document.createElement('span');
+        placeholder.className = 'tag-placeholder';
+        placeholder.textContent = '标签加载失败';
+        tagList.replaceChildren(placeholder);
+        const message = typeof initSqlJs !== 'function'
+          ? 'sql.js 未能加载，请检查网络连接后刷新页面。'
+          : localFile
+            ? '请确认选择的是有效的 PromptList data.db 文件，然后重试。'
+            : '请确认 /promptlist/data.db 存在，并通过项目根目录的本地 HTTP 服务打开页面。';
+        showEmpty('提示词暂时无法加载', message);
+      }
+    }
+
+    document.getElementById('chooseDbButton').addEventListener('click', () => localDbInput.click());
+    localDbInput.addEventListener('change', () => {
+      const file = localDbInput.files[0];
+      localDbInput.value = '';
+      if (file) loadDatabase(file);
+    });
+    searchInput.addEventListener('input', () => { if (database) queryPrompts(); });
+    tagList.addEventListener('click', event => {
+      const button = event.target.closest('button[data-tag-id]');
+      if (!button || !database) return;
+      const id = Number(button.dataset.tagId);
+      if (selectedTagIds.has(id)) selectedTagIds.delete(id);
+      else selectedTagIds.add(id);
+      button.setAttribute('aria-pressed', String(selectedTagIds.has(id)));
+      clearTags.hidden = selectedTagIds.size === 0;
+      queryPrompts();
+    });
+    clearTags.addEventListener('click', () => {
+      selectedTagIds.clear();
+      tagList.querySelectorAll('button[data-tag-id]').forEach(button => button.setAttribute('aria-pressed', 'false'));
+      clearTags.hidden = true;
+      queryPrompts();
+    });
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      const isOpen = navLinks.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    loadDatabase();
+  </script>
+</body>
+</html>

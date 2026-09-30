@@ -8,6 +8,7 @@ const themes = [
     { name: "learn-rmb", label: "认识人民币", desc: "小学一年级数学课件，认识中国钱币" },
     { name: "VibCodingProgress", label: "FC模拟器开发流程", desc: "Prompt工程四步流程编辑器" },
     { name: "ai-programming-share", label: "AI 编程经验分享", desc: "面向工程实践的 AI 编程认知与 Agent 协作分享" },
+    { name: "promptlist", label: "PromptList", desc: "浏览、筛选与复制 AI 提示词" },
 ];
 
 /**
